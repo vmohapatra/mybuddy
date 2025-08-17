@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: mybuddy-postgres
+    environment:
+      POSTGRES_DB: mybuddy
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - mybuddy-network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: mybuddy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mybuddy-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mybuddy-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybuddy
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - mybuddy-network
+    volumes:
+      - ./backend:/app
+      - /app/.gradle
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  mybuddy-network:
+    driver: bridge
