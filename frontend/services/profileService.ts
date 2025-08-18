@@ -1,67 +1,70 @@
-import apiClient from './api';
-import { Profile, CreateProfileRequest, ProfileListResponse } from '../types/Profile';
+import api from './api';
 
-export class ProfileService {
-  static async createProfile(request: CreateProfileRequest): Promise<Profile> {
-    try {
-      return await apiClient.post<Profile>('/api/profiles', request);
-    } catch (error) {
-      console.log('Backend not available, creating mock profile');
-      // Return a mock profile for now
-      return {
-        id: Date.now(),
-        email: request.email,
-        deviceId: request.deviceId,
-        buddyName: request.buddyName,
-        buddyPersonality: request.buddyPersonality,
-        buddyRules: request.buddyRules,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-    }
-  }
-
-  static async getProfiles(email: string, deviceId: string): Promise<ProfileListResponse> {
-    try {
-      return await apiClient.get<ProfileListResponse>('/api/profiles', {
-        email,
-        deviceId,
-      });
-    } catch (error) {
-      console.log('Backend not available, returning empty profiles');
-      // Return empty profiles when backend is not available
-      return {
-        profiles: [],
-        total: 0,
-      };
-    }
-  }
-
-  static async getProfile(id: number): Promise<Profile> {
-    try {
-      return await apiClient.get<Profile>(`/api/profiles/${id}`);
-    } catch (error) {
-      console.log('Backend not available, returning mock profile');
-      // Return a mock profile for now
-      return {
-        id,
-        email: 'user@example.com',
-        deviceId: 'device-123',
-        buddyName: 'Mock Buddy',
-        buddyPersonality: 'A friendly AI companion',
-        buddyRules: 'Be helpful and supportive',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-    }
-  }
-
-  static async deleteProfile(id: number): Promise<void> {
-    try {
-      await apiClient.delete<void>(`/api/profiles/${id}`);
-    } catch (error) {
-      console.log('Backend not available, mock delete successful');
-      // Mock successful deletion when backend is not available
-    }
-  }
+export interface Profile {
+  id: number;
+  email: string;
+  deviceId: string;
+  buddyName: string;
+  buddyPersonality: string;
+  buddyRules?: string;
+  role: string;
+  subscriptionPlan: string;
+  createdAt: string;
+  updatedAt: string;
 }
+
+export interface CreateProfileRequest {
+  email: string;
+  deviceId: string;
+  buddyName: string;
+  buddyPersonality: string;
+  buddyRules?: string;
+  role?: string;
+  subscriptionPlan?: string;
+}
+
+export interface UpdateProfileRequest {
+  buddyName?: string;
+  buddyPersonality?: string;
+  buddyRules?: string;
+  email?: string;
+  role?: string;
+}
+
+export interface PinUpdateRequest {
+  currentPin?: string;
+  newPin: string;
+  email: string;
+}
+
+export interface PinResetRequest {
+  email: string;
+  profileId: number;
+}
+
+// Profile Service
+export const profileService = {
+  // Create a new profile
+  async createProfile(request: CreateProfileRequest): Promise<Profile> {
+    try {
+      const response = await api.post('/profiles', request);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      throw error;
+    }
+  },
+
+  // Get profile by ID
+  async getProfileById(id: number): Promise<Profile> {
+    try {
+      const response = await api.get(`/profiles/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting profile:', error);
+      throw error;
+    }
+  },
+
+  // Note: Additional profile API methods removed (frontend-only now)
+};

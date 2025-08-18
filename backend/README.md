@@ -1,16 +1,35 @@
 # MyBuddy Backend
 
-A Spring Boot application written in Kotlin that provides RESTful APIs for the MyBuddy system, featuring profile management, role-based access control, and LLM integration.
+A Spring Boot application written in Kotlin that provides RESTful APIs for the MyBuddy system, focused on search, search preferences, and LLM integration.
+
+## 🚀 Quick Start
+
+1. **Start the application**
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+
+2. **Access Swagger UI**
+   - Open: `http://localhost:8080/api/v1/swagger-ui.html`
+   - View all available endpoints
+   - Test APIs directly from the interface
+
+3. **Configure OpenAI (Optional)**
+   - Use the **Configuration** endpoints in Swagger
+   - Set your API key without restarting
+   - Enable/disable AI features dynamically
+
+4. **Test the APIs**
+   - Perform search requests and adjust preferences (including tone and audience)
+   - All endpoints are documented with examples
 
 ## 🚀 Features
 
-- **Spring Boot 3.2**: Latest Spring Boot version with Kotlin support
-- **JPA/Hibernate**: Database persistence with automatic schema generation
-- **Spring Security**: Role-based authentication and authorization
+- **Spring Boot 3.2** with Kotlin
 - **Spring AI**: OpenAI integration for LLM responses
-- **RESTful APIs**: Clean, documented API endpoints
-- **H2 Database**: In-memory database for development
-- **PostgreSQL**: Production-ready database support
+- **RESTful APIs**: Clean, documented API endpoints with Swagger/OpenAPI
+- **Dynamic Configuration**: Enable/disable OpenAI without restarting
+- **Search Preferences**: Filter/sort and set tone/audience for LLM summaries
 - **Docker Support**: Containerized deployment ready
 
 ## 📋 Prerequisites
@@ -26,14 +45,14 @@ java --version    # Should show Java 17 or higher
 javac --version   # Should show Java 17 or higher
 ```
 
-### Gradle (Optional)
-- **Version**: 8.0 or higher
-- **Note**: Gradle wrapper is included, so manual installation is optional
-- **Installation**: Download from [gradle.org](https://gradle.org/install/)
+### Maven (Optional)
+- **Version**: 3.6 or higher
+- **Note**: Maven wrapper is included, so manual installation is optional
+- **Installation**: Download from [maven.apache.org](https://maven.apache.org/download.cgi/)
 
-### Verify Gradle Installation
+### Verify Maven Installation
 ```bash
-gradle --version  # Should show Gradle 8.x or higher
+mvn --version  # Should show Maven 3.x or higher
 ```
 
 ## 🛠️ Installation
@@ -46,13 +65,13 @@ gradle --version  # Should show Gradle 8.x or higher
 2. **Verify project structure**
    ```bash
    ls -la
-   # Should show: build.gradle.kts, settings.gradle.kts, src/, etc.
+   # Should show: pom.xml, src/, etc.
    ```
 
-3. **Check Gradle wrapper**
+3. **Check Maven wrapper**
    ```bash
-   ./gradlew --version
-   # On Windows: gradlew.bat --version
+   ./mvnw --version
+   # On Windows: mvnw.cmd --version
    ```
 
 ## 🚀 Running the Application
@@ -61,8 +80,8 @@ gradle --version  # Should show Gradle 8.x or higher
 
 1. **Start the application**
    ```bash
-   ./gradlew bootRun
-   # On Windows: gradlew.bat bootRun
+   ./mvnw spring-boot:run
+   # On Windows: mvnw.cmd spring-boot:run
    ```
 
 2. **Verify startup**
@@ -79,18 +98,18 @@ gradle --version  # Should show Gradle 8.x or higher
 
 1. **Build the application**
    ```bash
-   ./gradlew build
-   # On Windows: gradlew.bat build
+   ./mvnw clean package
+   # On Windows: mvnw.cmd clean package
    ```
 
 2. **Run the JAR file**
    ```bash
-   java -jar build/libs/backend-0.0.1-SNAPSHOT.jar
+   java -jar target/mybuddy-backend-0.0.1-SNAPSHOT.jar
    ```
 
 ### Using IDE (IntelliJ IDEA, Eclipse, VS Code)
 
-1. **Import as Gradle project**
+1. **Import as Maven project**
 2. **Run `BuddyApplication.kt`** as main class
 3. **Or use Spring Boot dashboard** in your IDE
 
@@ -191,86 +210,125 @@ logging:
 
 ```bash
 # Development
-./gradlew bootRun          # Run application
-./gradlew build            # Build project
-./gradlew test             # Run tests
-./gradlew clean            # Clean build artifacts
+./mvnw spring-boot:run     # Run application
+./mvnw clean compile       # Clean and compile
+./mvnw clean package       # Build project
+./mvnw test                # Run tests
 
 # Database
-./gradlew flywayMigrate    # Run database migrations
-./gradlew flywayInfo       # Show migration status
+./mvnw spring-boot:run     # Run with H2 database
+# PostgreSQL setup: Update application.yml
 
 # Dependencies
-./gradlew dependencies     # Show dependency tree
-./gradlew dependencyInsight # Analyze specific dependency
+./mvnw dependency:tree     # Show dependency tree
+./mvnw dependency:resolve  # Resolve dependencies
 
 # IDE Support
-./gradlew idea             # Generate IntelliJ IDEA project
-./gradlew eclipse          # Generate Eclipse project
+# Import as Maven project in IntelliJ IDEA, Eclipse, or VS Code
 ```
 
-## 🏗️ Project Structure
+## 🏗️ Project Structure (Key Parts)
 
 ```
 backend/
-├── src/
-│   ├── main/
-│   │   ├── kotlin/com/buddyapp/
-│   │   │   ├── BuddyApplication.kt      # Main application class
-│   │   │   ├── config/                  # Configuration classes
-│   │   │   │   ├── SecurityConfig.kt    # Spring Security configuration
-│   │   │   │   └── DatabaseConfig.kt    # Database configuration
-│   │   │   ├── controllers/             # REST controllers
-│   │   │   │   ├── ProfileController.kt # Profile management APIs
-│   │   │   │   └── SearchController.kt  # Search and LLM APIs
-│   │   │   ├── models/                  # Data models
-│   │   │   │   ├── Profile.kt           # Profile entity
-│   │   │   │   ├── SearchEntry.kt       # Search history entity
-│   │   │   │   └── dto/                 # Data Transfer Objects
-│   │   │   ├── repositories/            # Data access layer
-│   │   │   │   └── ProfileRepository.kt # Profile data operations
-│   │   │   ├── services/                # Business logic
-│   │   │   │   ├── ProfileService.kt    # Profile business logic
-│   │   │   │   └── LLMService.kt        # LLM integration
-│   │   │   └── rules/                   # Business rules
-│   │   └── resources/
-│   │       ├── application.yml          # Application configuration
-│   │       ├── schema.sql               # Database schema
-│   │       └── data.sql                 # Initial data
-│   └── test/
-│       └── kotlin/com/buddyapp/         # Test classes
-├── build.gradle.kts                      # Build configuration
-├── settings.gradle.kts                   # Project settings
-└── README.md                             # This file
+├── src/main/kotlin/com/buddyapp/
+│   ├── BuddyApplication.kt
+│   ├── config/
+│   │   ├── OpenAiConfig.kt
+│   │   ├── SearchConfig.kt
+│   │   └── SwaggerConfig.kt
+│   ├── controllers/
+│   │   ├── ConfigController.kt
+│   │   ├── SearchController.kt
+│   │   └── SearchPreferencesController.kt
+│   ├── services/
+│   │   ├── LLMService.kt
+│   │   ├── RealSearchService.kt
+│   │   ├── SearchPreferencesService.kt
+│   │   └── SearchService.kt
+│   └── models/dto/
+│       ├── SearchRequest.kt
+│       ├── SearchResponse.kt
+│       ├── SearchPreferences.kt
+│       └── OpenAiConfig*.kt
+└── src/main/resources/application.yml
 ```
+
+## 📚 API Documentation & Testing
+
+### Swagger/OpenAPI UI
+The backend provides comprehensive API documentation through Swagger UI:
+
+- **Swagger UI**: `http://localhost:8080/api/v1/swagger-ui.html`
+- **OpenAPI JSON**: `http://localhost:8080/api/v1/api-docs`
+- **API Base URL**: `http://localhost:8080/api/v1`
+
+### Available API Endpoints
+
+#### 🔧 Configuration
+- GET `/api/v1/config/openai` – View OpenAI settings
+- POST `/api/v1/config/openai` – Update OpenAI settings
+- POST `/api/v1/config/openai/enable` – Enable OpenAI
+- POST `/api/v1/config/openai/disable` – Disable OpenAI
+- GET `/api/v1/config/status` – App status
+
+#### 🔍 Search & LLM
+- POST `/api/v1/search` – Perform AI-enhanced search. Respects SearchPreferences including `tone` and `audience`.
+
+#### ⚙️ Search Preferences (helpers)
+- GET `/api/v1/search/preferences/default`
+- GET `/api/v1/search/preferences/academic`
+- GET `/api/v1/search/preferences/news`
+- GET `/api/v1/search/preferences/technical`
+
+### Dynamic OpenAI Configuration
+The backend supports **dynamic configuration** without restarting:
+
+```json
+POST /api/v1/config/openai
+{
+  "enabled": true,
+  "apiKey": "sk-your-api-key-here",
+  "model": "gpt-3.5-turbo",
+  "temperature": 0.7,
+  "maxTokens": 1000
+}
+```
+
+**Benefits:**
+- ✅ **No Restart Required**: Enable/disable AI features instantly
+- ✅ **Real-time Updates**: Change settings while application is running
+- ✅ **Easy Testing**: Quickly switch between AI and offline modes
+- ✅ **Development Friendly**: No need to restart for configuration changes
 
 ## 🧪 Testing
 
 ### Unit Tests
 ```bash
 # Run all tests
-./gradlew test
+./mvnw test
 
 # Run specific test class
-./gradlew test --tests ProfileServiceTest
+./mvnw test -Dtest=ProfileServiceTest
 
 # Run tests with coverage
-./gradlew test jacocoTestReport
+./mvnw test jacocoTestReport
 ```
 
 ### Integration Tests
 ```bash
 # Run integration tests
-./gradlew integrationTest
+./mvnw test -Dtest=*IntegrationTest
 
 # Run with specific profile
-./gradlew integrationTest -Dspring.profiles.active=test
+./mvnw test -Dspring.profiles.active=test
 ```
 
 ### API Testing
-1. **Start the application**
-2. **Use Postman or curl** to test endpoints
-3. **Check API documentation** at `/swagger-ui.html`
+1. **Start the application**: `./mvnw spring-boot:run`
+2. **Access Swagger UI**: `http://localhost:8080/api/v1/swagger-ui.html`
+3. **Test endpoints directly** from the Swagger interface
+4. **Use Postman or curl** for advanced testing
 
 ## 🐛 Troubleshooting
 
@@ -294,23 +352,14 @@ server:
 
 #### Build Failures
 ```bash
-# Clean and rebuild
-./gradlew clean build
-
-# Check Gradle version compatibility
-./gradlew --version
-
-# Update Gradle wrapper
-./gradlew wrapper --gradle-version 8.5
+# Clean and rebuild (Maven)
+mvn clean package -DskipTests
 ```
 
 #### Memory Issues
+Increase JVM heap when running the JAR, if needed:
 ```bash
-# Increase JVM memory
-export GRADLE_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
-
-# Or in gradle.properties
-org.gradle.jvmargs=-Xmx2048m -XX:MaxPermSize=512m
+java -Xmx2048m -jar target/mybuddy-backend-0.0.1-SNAPSHOT.jar
 ```
 
 ### Performance Issues
@@ -322,7 +371,7 @@ org.gradle.jvmargs=-Xmx2048m -XX:MaxPermSize=512m
 
 ### Core Dependencies
 - **Spring Boot**: 3.2.0
-- **Kotlin**: 1.9.10
+- **Kotlin**: 1.9.20
 - **Spring Data JPA**: 3.2.0
 - **Spring Security**: 6.2.0
 - **Spring AI**: 0.8.0
@@ -332,24 +381,29 @@ org.gradle.jvmargs=-Xmx2048m -XX:MaxPermSize=512m
 - **PostgreSQL**: 42.7.1 (prod)
 - **Hibernate**: 6.4.0
 
+### API Documentation
+- **SpringDoc OpenAPI**: 2.2.0
+- **Swagger UI**: 5.2.0
+- **OpenAPI 3**: Full specification support
+
 ### Development Dependencies
 - **Spring Boot Test**: 3.2.0
 - **JUnit 5**: 5.10.0
 - **Mockito**: 5.7.0
-- **Gradle**: 8.5
+- **Maven**: 3.9.5 (wrapper included)
 
 ## 🔄 Updates and Maintenance
 
 ### Updating Dependencies
 ```bash
 # Check for outdated dependencies
-./gradlew dependencyUpdates
+./mvnw versions:display-dependency-updates
 
 # Update specific dependency
-./gradlew dependencyInsight --dependency spring-boot-starter-web
+./mvnw dependency:tree -Dverbose
 
 # Update all dependencies
-./gradlew dependencyUpdates --rejectVersionIf=.*-M.*
+./mvnw versions:use-latest-versions
 ```
 
 ### Spring Boot Updates
@@ -357,22 +411,22 @@ org.gradle.jvmargs=-Xmx2048m -XX:MaxPermSize=512m
 # Use Spring Boot CLI
 spring upgrade
 
-# Or manually update version in build.gradle.kts
-plugins {
-    id 'org.springframework.boot' version '3.3.0'
-}
+# Or manually update version in pom.xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.0</version>
+</parent>
 ```
 
 ### Database Migrations
 ```bash
-# Run migrations
-./gradlew flywayMigrate
+# H2 database (development)
+# Schema is auto-generated with ddl-auto: create-drop
 
-# Check migration status
-./gradlew flywayInfo
-
-# Repair failed migrations
-./gradlew flywayRepair
+# PostgreSQL (production)
+# Use Flyway or manual schema management
+# Update application.yml for production database
 ```
 
 ## 🚀 Deployment
@@ -394,12 +448,12 @@ plugins {
 ### Production Deployment
 1. **Build production JAR**
    ```bash
-   ./gradlew build -x test
+   ./mvnw clean package -DskipTests
    ```
 
 2. **Deploy to server**
    ```bash
-   scp build/libs/backend-0.0.1-SNAPSHOT.jar user@server:/app/
+   scp target/mybuddy-backend-0.0.1-SNAPSHOT.jar user@server:/app/
    ```
 
 3. **Run with systemd** (Linux)

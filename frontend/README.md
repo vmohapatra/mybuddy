@@ -6,9 +6,9 @@ A React Native (Expo + TypeScript) application that provides a cross-platform in
 
 - **Cross-Platform Support**: Web, Android, and iOS
 - **TypeScript**: Full type safety and better development experience
-- **Role-Based Profiles**: Admin, Standard Plus, Standard, Child, and Guest roles
+- **Role-Based Profiles**: Admin, Regular, Child, Guest (frontend-only)
 - **Profile Management**: Create, switch between, and manage multiple profiles
-- **Memory System**: Search history, short-term, and long-term memory management
+- **Memory System**: Search history (frontend-only localStorage)
 - **LLM Context Adaptation**: Personalized AI responses based on profile data
 - **Local Storage**: Profile data stored locally in browser/mobile storage
 
@@ -56,9 +56,11 @@ npm --version   # Should show 9.x.x or higher
 
 ### Web Development (Recommended for testing)
 
-1. **Start webpack development server**
+1. **Start web (Expo or webpack)**
    ```bash
-   npm run webpack
+   npm run web      # Expo web
+   # or
+   npm run webpack  # webpack dev server
    ```
 
 2. **Open in browser**
@@ -90,7 +92,7 @@ npm --version   # Should show 9.x.x or higher
 ```bash
 # Web development
 npm run webpack          # Start webpack dev server
-npm run build:web        # Build for production
+npm run build            # Build production bundle (webpack)
 
 # Expo development
 npx expo start          # Start Expo development server
@@ -133,15 +135,12 @@ frontend/
 - **Source Maps**: Enabled for debugging
 
 ### TypeScript Configuration
-- **Target**: ES2020
-- **Module**: ESNext
-- **JSX**: React
-- **Strict Mode**: Enabled
+- Ensure JSX is enabled and esModuleInterop if needed for default imports
 
 ## 🧪 Testing
 
 ### Manual Testing
-1. **Profile Creation**: Test creating profiles with different roles
+1. **Profile Creation**: Test creating profiles with Admin, Regular, Child, Guest
 2. **Profile Switching**: Verify profile selection and switching works
 3. **Memory Management**: Test memory reset and search entry addition
 4. **Cross-Platform**: Test on web, Android, and iOS
@@ -169,8 +168,8 @@ frontend/
 - **Alternative**: Use `npm run webpack -- --port 3000`
 
 #### TypeScript compilation errors
-- **Solution**: Check type definitions and imports
-- **Command**: `npx tsc --noEmit`
+- Ensure tsconfig.json has JSX set (e.g., "react-jsx") and appropriate module settings
+- Command: `npx tsc --noEmit`
 
 ### Performance Issues
 - **Web**: Check browser console for errors
