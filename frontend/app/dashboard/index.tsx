@@ -9,12 +9,23 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ProfileService } from '../../services/profileService';
+import { profileService } from '../../services/profileService';
 import { Profile } from '../../types/Profile';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  interface SubscriptionUsage {
+    currentPlan: string;
+    profileCount: number;
+    maxProfiles: number;
+    deviceCount: number;
+    maxDevices: number;
+    canCreateProfile: boolean;
+    canRegisterDevice: boolean;
+    availableFeatures: string[];
+  }
+  const [subscriptionUsage, setSubscriptionUsage] = useState<SubscriptionUsage | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,9 +40,11 @@ export default function DashboardScreen() {
         return;
       }
 
-      const profile = await ProfileService.getProfile(parseInt(profileId));
+      const profile = await profileService.getProfileById(parseInt(profileId));
       if (profile) {
         setSelectedProfile(profile);
+        // Compute subscription usage locally based on plan and local profiles
+        setSubscriptionUsage(computeSubscriptionUsage(profile.subscriptionPlan));
       } else {
         Alert.alert('Error', 'Profile not found');
         router.replace('/');
@@ -43,6 +56,47 @@ export default function DashboardScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getPlanLimits = (plan: string) => {
+    switch (plan) {
+      case 'UNLIMITED':
+        return { maxProfiles: 9999, maxDevices: 9999, features: ['Search (full)', 'Chat (full)', 'History', 'Reset', 'Manage Roles'] };
+      case 'PREMIUM':
+        return { maxProfiles: 5, maxDevices: 3, features: ['Search (advanced)', 'Chat (advanced)', 'Full history'] };
+      case 'STANDARD_PLUS':
+        return { maxProfiles: 3, maxDevices: 3, features: ['Search', 'Chat', 'Partial history'] };
+      case 'STANDARD':
+        return { maxProfiles: 2, maxDevices: 2, features: ['Search', 'Chat'] };
+      case 'FREE':
+      default:
+        return { maxProfiles: 1, maxDevices: 1, features: ['Search (limited)', 'Chat (limited)'] };
+    }
+  };
+
+  const computeSubscriptionUsage = (plan: string): SubscriptionUsage => {
+    const limits = getPlanLimits(plan);
+    let profileCount = 0;
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = window.localStorage.getItem('mybuddy-profiles');
+        const list = raw ? JSON.parse(raw) : [];
+        profileCount = Array.isArray(list) ? list.length : 0;
+      }
+    } catch (_) {
+      profileCount = 0;
+    }
+    const deviceCount = 1; // Web app counts as one device for now
+    return {
+      currentPlan: plan || 'FREE',
+      profileCount,
+      maxProfiles: limits.maxProfiles,
+      deviceCount,
+      maxDevices: limits.maxDevices,
+      canCreateProfile: profileCount < limits.maxProfiles,
+      canRegisterDevice: deviceCount < limits.maxDevices,
+      availableFeatures: limits.features,
+    };
   };
 
   const handleFeaturePress = (feature: string) => {
@@ -67,6 +121,14 @@ export default function DashboardScreen() {
 
   const handleBackToProfiles = () => {
     router.replace('/');
+  };
+
+  const handleUpgradeSubscription = () => {
+    Alert.alert(
+      'Upgrade Subscription',
+      'Subscription upgrade functionality coming soon!',
+      [{ text: 'OK' }]
+    );
   };
 
   if (loading) {
@@ -96,6 +158,54 @@ export default function DashboardScreen() {
           {selectedProfile.buddyPersonality}
         </Text>
       </View>
+
+      {/* Subscription Status Display */}
+      {subscriptionUsage && (
+        <View style={styles.subscriptionContainer}>
+          <Text style={styles.subscriptionTitle}>Subscription Status</Text>
+          <View style={styles.subscriptionCard}>
+            <View style={styles.subscriptionRow}>
+              <Text style={styles.subscriptionLabel}>Current Plan:</Text>
+              <Text style={styles.subscriptionValue}>{subscriptionUsage.currentPlan}</Text>
+            </View>
+            <View style={styles.subscriptionRow}>
+              <Text style={styles.subscriptionLabel}>User Role:</Text>
+              <Text style={styles.subscriptionValue}>{selectedProfile.role}</Text>
+            </View>
+            <View style={styles.subscriptionRow}>
+              <Text style={styles.subscriptionLabel}>Profiles:</Text>
+              <Text style={styles.subscriptionValue}>
+                {subscriptionUsage.profileCount} / {subscriptionUsage.maxProfiles}
+              </Text>
+            </View>
+            <View style={styles.subscriptionRow}>
+              <Text style={styles.subscriptionLabel}>Devices:</Text>
+              <Text style={styles.subscriptionValue}>
+                {subscriptionUsage.deviceCount} / {subscriptionUsage.maxDevices}
+              </Text>
+            </View>
+            <View style={styles.subscriptionRow}>
+              <Text style={styles.subscriptionLabel}>Can Create Profile:</Text>
+              <Text style={[
+                styles.subscriptionValue,
+                subscriptionUsage.canCreateProfile ? styles.positive : styles.negative
+              ]}>
+                {subscriptionUsage.canCreateProfile ? 'Yes' : 'No'}
+              </Text>
+            </View>
+          </View>
+          
+          {/* Available Features */}
+          <View style={styles.featuresCard}>
+            <Text style={styles.featuresTitle}>Available Features</Text>
+            <View style={styles.featuresList}>
+              {subscriptionUsage.availableFeatures.map((feature, index) => (
+                <Text key={index} style={styles.featureItem}>• {feature}</Text>
+              ))}
+            </View>
+          </View>
+        </View>
+      )}
 
       <View style={styles.featuresContainer}>
         <Text style={styles.sectionTitle}>What would you like to do?</Text>
@@ -230,5 +340,64 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 100,
+  },
+  subscriptionContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  subscriptionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  subscriptionCard: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  subscriptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  subscriptionLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#555',
+  },
+  subscriptionValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  positive: {
+    color: 'green',
+  },
+  negative: {
+    color: 'red',
+  },
+  featuresCard: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 10,
+  },
+  featuresTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  featuresList: {
+    // No specific styles for list items, they will inherit from featureCard
+  },
+  featureItem: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 22,
+    marginBottom: 5,
   },
 });

@@ -1,6 +1,7 @@
 package com.buddyapp.services
 
-import com.buddyapp.models.Profile
+import com.buddyapp.models.dto.SearchSource
+import com.buddyapp.models.dto.SearchPreferences
 import org.springframework.ai.chat.ChatClient
 import org.springframework.ai.chat.ChatResponse
 import org.springframework.ai.chat.messages.Message
@@ -11,12 +12,16 @@ import org.springframework.stereotype.Service
 
 @Service
 class LLMService(
-    private val chatClient: ChatClient
+    private val chatClient: ChatClient?
 ) {
     
-    fun generateChatResponse(profile: Profile, userMessage: String, chatHistory: List<String>): String {
-        val systemPrompt = buildSystemPrompt(profile, chatHistory)
-        val userPrompt = UserMessage(userMessage)
+    fun generateSearchOverview(query: String, sources: List<SearchSource>,  preferences: SearchPreferences): String {
+        if (chatClient == null) {
+            return "Based on the available sources, here's what I found about '$query': The search results indicate various perspectives and information related to your query. While I'm in offline mode, I can see that there are multiple sources available that could provide valuable insights."
+        }
+        
+        val systemPrompt = buildSearchOverviewPrompt(query, sources, preferences)
+        val userPrompt = UserMessage("Please provide a comprehensive overview of the search results for: $query")
         
         val prompt = Prompt(listOf(systemPrompt, userPrompt))
         val response: ChatResponse = chatClient.call(prompt)
@@ -24,80 +29,54 @@ class LLMService(
         return response.result.output.content
     }
     
-    fun generateSearchResponse(profile: Profile, query: String): String {
-        val systemPrompt = buildSearchPrompt(profile, query)
-        val userPrompt = UserMessage("Please help me with this search query: $query")
-        
-        val prompt = Prompt(listOf(systemPrompt, userPrompt))
-        val response: ChatResponse = chatClient.call(prompt)
-        
-        return response.result.output.content
-    }
-    
-    fun generateGameResponse(profile: Profile, gameType: String, gameData: String?): String {
-        val systemPrompt = buildGamePrompt(profile, gameType, gameData)
-        val userPrompt = UserMessage("Let's play a $gameType game!")
-        
-        val prompt = Prompt(listOf(systemPrompt, userPrompt))
-        val response: ChatResponse = chatClient.call(prompt)
-        
-        return response.result.output.content
-    }
-    
-    private fun buildSystemPrompt(profile: Profile, chatHistory: List<String>): SystemMessage {
-        val personality = profile.buddyPersonality
-        val rules = profile.buddyRules ?: ""
-        val historyContext = if (chatHistory.isNotEmpty()) {
-            "Previous conversation context: ${chatHistory.takeLast(5).joinToString(" | ")}"
-        } else ""
-        
+    private fun buildSearchOverviewPrompt(query: String, sources: List<SearchSource>, preferences: SearchPreferences): SystemMessage {
+        val tone = preferences.tone
+        val audience = preferences.audience ?: "general audience"
+
+        // Convert sources to JSON-like string (safe formatting for prompt)
+        val sourcesJson = sources.joinToString(",\n") { source ->
+            """
+            {
+              "title": "${source.title}",
+              "description": "${source.description}",
+              "url": "${source.url}",
+              "type": "${source.type}",
+              "relevanceScore": ${source.relevanceScore}
+            }
+            """.trimIndent()
+        }
+
         val prompt = """
-            You are ${profile.buddyName}, a buddy with the following personality: $personality
-            
-            $rules
-            
-            $historyContext
-            
-            Always stay in character as ${profile.buddyName}. Be helpful, engaging, and true to your personality.
-            Keep responses conversational and appropriate for a buddy relationship.
+        You are an AI search assistant analyzing search results for: "$query"
+
+        Tone: $tone
+        Audience: $audience
+
+        The following JSON contains the available sources:
+        [
+        $sourcesJson
+        ]
+
+        Please provide a comprehensive, well-structured overview that:
+        1. Summarizes the main findings
+        2. Identifies key themes and patterns
+        3. Highlights the most relevant information
+        4. Provides actionable insights
+        5. Maintains a professional yet accessible tone
+
+        Structure your response in **Markdown** with the following sections:
+        - **AI Summary**
+        - **Key Information**
+        - **Impact**
+        - **Outlook**
+        - **Sources**
+
+        In the **Sources** section:
+        - Always list the provided source titles with their actual URLs.
+        - Do not invent or omit any URLs.
+        - Keep the tone $tone and suitable for $audience throughout the response.
         """.trimIndent()
-        
-        return SystemMessage(prompt)
-    }
-    
-    private fun buildSearchPrompt(profile: Profile, query: String): SystemMessage {
-        val personality = profile.buddyPersonality
-        val rules = profile.buddyRules ?: ""
-        
-        val prompt = """
-            You are ${profile.buddyName}, helping with a search query: "$query"
-            
-            Personality: $personality
-            Rules: $rules
-            
-            Provide helpful, relevant information while maintaining your buddy personality.
-            Be informative but also friendly and supportive.
-        """.trimIndent()
-        
-        return SystemMessage(prompt)
-    }
-    
-    private fun buildGamePrompt(profile: Profile, gameType: String, gameData: String?): SystemMessage {
-        val personality = profile.buddyPersonality
-        val rules = profile.buddyRules ?: ""
-        val gameContext = gameData ?: ""
-        
-        val prompt = """
-            You are ${profile.buddyName}, playing a $gameType game with your buddy.
-            
-            Personality: $personality
-            Rules: $rules
-            Game Context: $gameContext
-            
-            Be enthusiastic and engaging about the game. Make it fun and interactive.
-            Stay in character and make the game experience enjoyable.
-        """.trimIndent()
-        
+
         return SystemMessage(prompt)
     }
 }

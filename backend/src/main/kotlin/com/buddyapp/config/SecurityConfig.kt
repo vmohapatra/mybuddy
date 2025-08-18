@@ -11,27 +11,27 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig {
+open class SecurityConfig {
     
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+    open fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
             .cors { it.configurationSource(corsConfigurationSource()) }
             .authorizeHttpRequests { auth ->
                 auth.requestMatchers("/h2-console/**").permitAll()
-                    .requestMatchers("/api/**").permitAll()
+                    .requestMatchers("/**").permitAll() // Allow all paths for now
                     .anyRequest().authenticated()
             }
             .headers { headers ->
-                headers.frameOptions().disable() // For H2 console
+                headers.frameOptions { it.disable() } // For H2 console
             }
         
         return http.build()
     }
     
     @Bean
-    fun corsConfigurationSource(): CorsConfigurationSource {
+    open fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
         configuration.allowedOriginPatterns = listOf("*")
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")

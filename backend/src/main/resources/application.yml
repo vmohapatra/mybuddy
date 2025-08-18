@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: mybuddy-backend
+  
+  profiles:
+    active: dev
+  
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  
+  ai:
+    openai:
+      enabled: ${OPENAI_ENABLED:false}
+      api-key: ${OPENAI_API_KEY:}
+      base-url: https://api.openai.com
+      chat:
+        enabled: ${OPENAI_ENABLED:false}
+        options:
+          model: gpt-3.5-turbo
+          temperature: 0.7
+          max-tokens: 1000
+      embedding:
+        enabled: ${OPENAI_ENABLED:false}
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+logging:
+  level:
+    com.buddyapp: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.ai: DEBUG
+
+# Search Configuration
+search:
+  google:
+    api-key: ${GOOGLE_SEARCH_API_KEY:}
+    search-engine-id: ${GOOGLE_SEARCH_ENGINE_ID:}
+  bing:
+    api-key: ${BING_SEARCH_API_KEY:}
+  duckduckgo:
+    enabled: ${DUCKDUCKGO_ENABLED:true}
+
+# OpenAI Configuration
+openai:
+  enabled: ${OPENAI_ENABLED:false}
+  api-key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-3.5-turbo}
+  temperature: ${OPENAI_TEMPERATURE:0.7}
+  max-tokens: ${OPENAI_MAX_TOKENS:1000}
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    doc-expansion: none
+    enabled: true
+  packages-to-scan: com.buddyapp.controllers
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json

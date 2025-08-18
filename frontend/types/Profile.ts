@@ -5,6 +5,8 @@ export interface Profile {
   buddyName: string;
   buddyPersonality: string;
   buddyRules?: string;
+  role: string;
+  subscriptionPlan: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,6 +17,8 @@ export interface CreateProfileRequest {
   buddyName: string;
   buddyPersonality: string;
   buddyRules?: string;
+  role?: string;
+  subscriptionPlan?: string;
 }
 
 export interface ProfileResponse {
@@ -24,6 +28,8 @@ export interface ProfileResponse {
   buddyName: string;
   buddyPersonality: string;
   buddyRules?: string;
+  role: string;
+  subscriptionPlan: string;
   createdAt: string;
   updatedAt: string;
 }

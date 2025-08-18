@@ -5,9 +5,9 @@ A monorepo containing a Spring Boot Kotlin backend and React Native frontend for
 ## 🚀 Features
 
 - **Personalized AI Buddies**: Create custom AI assistants with unique personalities
-- **Role-Based Profiles**: Admin, Standard Plus, Standard, Child, and Guest roles with different capabilities
+- **Role-Based Profiles (Frontend-only)**: Admin, Regular, Child, Guest
 - **Profile Management**: Create, switch between, and manage multiple profiles seamlessly
-- **Memory System**: Comprehensive search history, short-term, and long-term memory management
+- **Memory System (Frontend-only)**: Search history managed in localStorage
 - **LLM Context Adaptation**: Personalized AI responses based on profile-specific data and rules
 - **Multi-Device Support**: Up to 3 buddies per device
 - **Interactive Features**: Chat, Search, Games, History tracking, Memory Management
@@ -24,16 +24,16 @@ mybuddy/
 ```
 
 ### Backend (Spring Boot + Kotlin)
-- **RESTful APIs** for profiles, chat, search, games
-- **JPA/Hibernate** for data persistence
-- **Spring AI** integration with OpenAI
+- **RESTful APIs** for search, search preferences, and configuration
+- **Spring AI** integration with OpenAI (LLM overview respects tone/audience)
 - **Security** with CORS configuration
 - **H2/PostgreSQL** database support
+- **Maven** build system with wrapper
 
 ### Frontend (React Native + Expo)
-- **Expo Router** for navigation
+- **Inline navigation** (router optional)
 - **TypeScript** for type safety
-- **AsyncStorage** for local data
+- **localStorage** (web) for profile/history
 - **Axios** for API communication
 - **Modern UI** with native components
 
@@ -44,7 +44,7 @@ mybuddy/
 - **Framework**: Spring Boot 3.2.0
 - **Database**: H2 (dev) / PostgreSQL (prod)
 - **AI**: Spring AI + OpenAI
-- **Build**: Gradle
+- **Build**: Maven
 - **Java**: 17+
 
 ### Frontend
@@ -71,19 +71,19 @@ git clone https://github.com/yourusername/mybuddy.git
 cd mybuddy
 ```
 
-### 2. Backend Setup
+### 2. Backend Setup (Search-focused)
 ```bash
 cd backend
 
 # Set OpenAI API key
 export OPENAI_API_KEY="your-api-key-here"
 
-# Run with Gradle
-./gradlew bootRun
+# Run with Maven
+./mvnw spring-boot:run
 
 # Or build and run JAR
-./gradlew build
-java -jar build/libs/mybuddy-backend-0.0.1-SNAPSHOT.jar
+./mvnw clean package
+java -jar target/mybuddy-backend-0.0.1-SNAPSHOT.jar
 ```
 
 📖 **Detailed Backend Setup**: See [backend/README.md](backend/README.md) for comprehensive backend setup instructions.
@@ -158,27 +158,21 @@ docker-compose logs -f backend
 - `frontend/services/api.ts` - API endpoint configuration
 - Environment-based base URLs (dev/prod)
 
-## 📊 API Endpoints
+## 📊 API Endpoints (current)
 
-### Profiles
-- `POST /api/profiles` - Create new buddy profile
-- `GET /api/profiles` - Get profiles by email/device
-- `GET /api/profiles/{id}` - Get specific profile
-- `DELETE /api/profiles/{id}` - Delete profile
+### Config
+- `GET/POST /api/v1/config/openai`, `POST /api/v1/config/openai/{enable|disable}`
 
-### Chat
-- `POST /api/chat/send` - Send message to buddy
-- `GET /api/chat/history/{profileId}` - Get chat history
-
-### Search & Games
-- Additional endpoints for search and game functionality
+### Search
+- `POST /api/v1/search` (respects SearchPreferences including `tone`, `audience`)
+- Preferences helpers: `/api/v1/search/preferences/{default|academic|news|technical}`
 
 ## 🧪 Testing
 
 ### Backend Tests
 ```bash
 cd backend
-./gradlew test
+mvn test
 ```
 
 ### Frontend Tests
@@ -192,14 +186,13 @@ npm test
 ### Backend
 ```bash
 cd backend
-./gradlew build -x test
+mvn clean package -DskipTests
 ```
 
 ### Frontend
 ```bash
 cd frontend
-expo build:android  # Android APK
-expo build:ios      # iOS IPA
+npm run build
 ```
 
 ## 🔒 Security Features

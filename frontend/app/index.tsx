@@ -25,7 +25,8 @@ interface Profile {
   email: string;
   name: string;
   pin: string;
-  role: 'Admin' | 'Standard Plus' | 'Standard' | 'Child' | 'Guest';
+  role: 'Admin' | 'Regular' | 'Child' | 'Guest';
+  subscriptionPlan: 'FREE' | 'STANDARD' | 'STANDARD_PLUS' | 'PREMIUM' | 'UNLIMITED';
   isAdmin: boolean;
   createdAt: Date;
   searchHistory: SearchEntry[];
@@ -59,12 +60,17 @@ function WelcomeScreen() {
   const [showPinVerification, setShowPinVerification] = useState<string | null>(null);
   const [pinInput, setPinInput] = useState('');
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [email, setEmail] = useState('');
-  const [buddyName, setBuddyName] = useState('');
-  const [pin, setPin] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'Admin' | 'Standard Plus' | 'Standard' | 'Child' | 'Guest'>('Standard');
   const [activeProfile, setActiveProfile] = useState<Profile | null>(null);
-                const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'search' | 'searchHistory' | 'resetLearning'>('dashboard');
+  const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'search' | 'searchHistory' | 'resetLearning'>('dashboard');
+  
+  // Profile creation form state
+  const [createFormData, setCreateFormData] = useState({
+    email: '',
+    buddyName: '',
+    pin: '',
+    selectedRole: 'Regular' as 'Admin' | 'Regular' | 'Child' | 'Guest',
+    selectedPlan: 'FREE' as 'FREE' | 'STANDARD' | 'STANDARD_PLUS' | 'PREMIUM' | 'UNLIMITED'
+  });
 
   // Helper functions
   const getRoleSpecificRules = (role: string): Partial<ProfileRules> => {
@@ -76,7 +82,7 @@ function WelcomeScreen() {
           allowedDomains: ['*'],
           contentFilters: []
         };
-      case 'Standard Plus':
+      case 'Regular':
         return {
           preferredTone: 'friendly',
           preferredStyle: 'detailed',
@@ -85,18 +91,12 @@ function WelcomeScreen() {
         };
       case 'Child':
         return {
-          preferredTone: 'educational',
-          preferredStyle: 'detailed',
-          contentFilters: ['adult', 'violence', 'inappropriate'],
-          allowedDomains: ['*.edu', '*.org', 'wikipedia.org', 'khanacademy.org']
+          preferredTone: 'friendly',
+          preferredStyle: 'conversational',
+          allowedDomains: ['*'],
+          contentFilters: ['adult', 'violence', 'inappropriate']
         };
       case 'Guest':
-        return {
-          preferredTone: 'formal',
-          preferredStyle: 'concise',
-          allowedDomains: ['*']
-        };
-      case 'Standard':
         return {
           preferredTone: 'friendly',
           preferredStyle: 'conversational',
@@ -126,17 +126,116 @@ function WelcomeScreen() {
   const generateInitialLLMContext = (role: string, name: string): string => {
     switch (role) {
       case 'Admin':
-        return `You are ${name}, the system administrator. You have full access to manage profiles, assign roles, and oversee the entire system. You can create new profiles and assign roles like Standard Plus, Standard, Child, or Guest.`;
-      case 'Standard Plus':
-        return `You are ${name}, a premium user with enhanced LLM responses and extended memory capabilities. Your responses are more detailed and you have access to advanced features.`;
-      case 'Standard':
-        return `You are ${name}, a standard user. You have access to personalized AI responses based on your search history and preferences. Your responses will adapt and improve over time as you interact with the system.`;
+        return `You are ${name}, the system administrator with unlimited access. You have full access to manage profiles, assign roles, and oversee the entire system. You can create new profiles and assign roles like Regular, Child, or Guest.`;
+      case 'Regular':
+        return `You are ${name}, a regular user with enhanced LLM responses and extended memory capabilities. Your responses are more detailed and you have access to advanced features.`;
       case 'Child':
-        return `You are ${name}, a child user. You are in child-safe mode with age-appropriate content filtering. Your responses are simplified, educational, and safe for young users.`;
+        return `You are ${name}, a child user with safe, age-appropriate content. You have access to personalized AI responses based on your search history and preferences, with content filtering for safety.`;
       case 'Guest':
-        return `You are ${name}, a guest user. You have limited access to basic AI responses. Your interactions are logged but not personalized.`;
+        return `You are ${name}, a guest user with limited access. You have access to basic AI responses without memory persistence.`;
       default:
         return `You are ${name}, a user of the MyBuddy system.`;
+    }
+  };
+
+  // Create search/chat payload based on user's role and subscription plan
+  const createSearchPayload = (profile: Profile, query: string) => {
+    const basePayload = {
+      query,
+      profileId: profile.id,
+      deviceId: 'web', // For now, hardcoded
+      includeHistory: true,
+      maxResults: 10
+    };
+
+    // Apply role-based restrictions
+    switch (profile.role) {
+      case 'Admin':
+        return {
+          ...basePayload,
+          maxResults: 50,
+          includeAdvancedFeatures: true,
+          includeMemoryContext: true,
+          allowAllSources: true
+        };
+      case 'Regular':
+        return {
+          ...basePayload,
+          maxResults: 25,
+          includeAdvancedFeatures: true,
+          includeMemoryContext: true,
+          allowAllSources: true
+        };
+      case 'Child':
+        return {
+          ...basePayload,
+          maxResults: 15,
+          includeAdvancedFeatures: false,
+          includeMemoryContext: true,
+          allowAllSources: false
+        };
+      case 'Guest':
+        return {
+          ...basePayload,
+          maxResults: 10,
+          includeAdvancedFeatures: false,
+          includeMemoryContext: false,
+          allowAllSources: false
+        };
+      default:
+        return basePayload;
+    }
+  };
+
+  // Create chat payload based on user's role and subscription plan
+  const createChatPayload = (profile: Profile, message: string) => {
+    const basePayload = {
+      message,
+      profileId: profile.id,
+      deviceId: 'web',
+      includeContext: true,
+      maxTokens: 1000
+    };
+
+    // Apply subscription plan restrictions
+    switch (profile.subscriptionPlan) {
+      case 'UNLIMITED':
+        return {
+          ...basePayload,
+          maxTokens: 4000,
+          includeFullMemory: true,
+          includeAdvancedFeatures: true
+        };
+      case 'PREMIUM':
+        return {
+          ...basePayload,
+          maxTokens: 2000,
+          includeFullMemory: true,
+          includeAdvancedFeatures: true
+        };
+      case 'STANDARD_PLUS':
+        return {
+          ...basePayload,
+          maxTokens: 1500,
+          includePartialMemory: true,
+          includeAdvancedFeatures: false
+        };
+      case 'STANDARD':
+        return {
+          ...basePayload,
+          maxTokens: 1000,
+          includePartialMemory: true,
+          includeAdvancedFeatures: false
+        };
+      case 'FREE':
+        return {
+          ...basePayload,
+          maxTokens: 500,
+          includePartialMemory: false,
+          includeAdvancedFeatures: false
+        };
+      default:
+        return basePayload;
     }
   };
 
@@ -149,6 +248,7 @@ function WelcomeScreen() {
         const updatedProfile = {
           ...firstProfile,
           role: 'Admin' as const,
+          subscriptionPlan: 'UNLIMITED' as const,
           isAdmin: true,
           rules: { ...firstProfile.rules, ...getRoleSpecificRules('Admin') },
           llmContext: generateInitialLLMContext('Admin', firstProfile.name)
@@ -252,65 +352,12 @@ function WelcomeScreen() {
     setShowCreateForm(true);
   };
 
-  const handleSubmitProfile = () => {
-    if (!email.trim() || !buddyName.trim() || !pin.trim()) {
-      alert('Please fill in email, buddy name, and 4-digit PIN');
-      return;
-    }
 
-    if (pin.length !== 4) {
-      alert('PIN must be exactly 4 digits');
-      return;
-    }
-
-    const existingProfile = profiles.find(profile => profile.email.toLowerCase() === email.toLowerCase());
-    if (existingProfile) {
-      alert(`A profile already exists for email: ${email}`);
-      return;
-    }
-
-    const isFirstProfile = profiles.length === 0;
-    const isAdmin = isFirstProfile;
-    const role = isAdmin ? 'Admin' : selectedRole;
-
-    const newProfile: Profile = {
-      id: Date.now().toString(),
-      email: email.trim(),
-      name: buddyName.trim(),
-      pin: pin.trim(),
-      role: role,
-      isAdmin: isAdmin,
-      createdAt: new Date(),
-      searchHistory: [],
-      rules: { ...DEFAULT_RULES, ...getRoleSpecificRules(role) },
-      llmContext: generateInitialLLMContext(role, buddyName.trim()),
-      shortTermMemory: [],
-      longTermMemory: []
-    };
-
-    const updatedProfiles = [...profiles, newProfile];
-    localStorage.setItem('mybuddy-profiles', JSON.stringify(updatedProfiles));
-    setProfiles(updatedProfiles);
-
-    const roleText = isAdmin ? 'Admin' : role;
-    alert(`Buddy "${buddyName}" created successfully for ${email}!\n\nRole: ${roleText}${isAdmin ? ' (First profile is automatically admin)' : ''}\n\nMemory system initialized with role-specific rules and context.`);
-    
-    setShowCreateForm(false);
-    setEmail('');
-    setBuddyName('');
-    setPin('');
-    setSelectedRole('Standard');
-  };
 
   const handleBack = () => {
-    setShowCreateForm(false);
     setShowProfileDetails(null);
     setShowProfileSelector(false);
     setShowProfileManagement(false);
-    setEmail('');
-    setBuddyName('');
-    setPin('');
-    setSelectedRole('Standard');
   };
 
   const handleSelectProfile = () => {
@@ -400,9 +447,7 @@ function WelcomeScreen() {
     }
   };
 
-  const handleRoleChange = (role: 'Admin' | 'Standard Plus' | 'Standard' | 'Child' | 'Guest') => {
-    setSelectedRole(role);
-  };
+
 
   const handleProfileDetails = (profileId: string) => {
     console.log('handleProfileDetails called with profileId:', profileId);
@@ -540,6 +585,7 @@ function WelcomeScreen() {
       const updatedProfile = {
         ...profile,
         role: 'Admin' as const,
+        subscriptionPlan: 'UNLIMITED' as const,
         isAdmin: true,
         rules: { ...profile.rules, ...getRoleSpecificRules('Admin') },
         llmContext: generateInitialLLMContext('Admin', profile.name)
@@ -558,7 +604,9 @@ function WelcomeScreen() {
     }
   };
 
-  // Render different screens based on currentScreen state
+
+
+  // Check for create form screen
   if (showCreateForm) {
     return (
       <ScrollView style={styles.container}>
@@ -576,86 +624,155 @@ function WelcomeScreen() {
         </View>
 
         <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address *</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="your.email@example.com"
-              placeholderTextColor="#999"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
+                     <View style={styles.inputGroup}>
+             <Text style={styles.label}>Email Address *</Text>
+             <TextInput
+               style={styles.input}
+               value={createFormData.email}
+               onChangeText={(text) => setCreateFormData({...createFormData, email: text})}
+               placeholder="your.email@example.com"
+               placeholderTextColor="#999"
+               keyboardType="email-address"
+               autoCapitalize="none"
+             />
+           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Buddy Name *</Text>
-            <TextInput
-              style={styles.input}
-              value={buddyName}
-              onChangeText={setBuddyName}
-              placeholder="e.g., Alex, Sam, or Luna"
-              placeholderTextColor="#999"
-            />
-          </View>
+           <View style={styles.inputGroup}>
+             <Text style={styles.label}>Buddy Name *</Text>
+             <TextInput
+               style={styles.input}
+               value={createFormData.buddyName}
+               onChangeText={(text) => setCreateFormData({...createFormData, buddyName: text})}
+               placeholder="e.g., Alex, Sam, or Luna"
+               placeholderTextColor="#999"
+             />
+           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>4-Digit PIN *</Text>
-            <Text style={styles.pinDescription}>
-              Create a 4-digit PIN to secure your profile. You'll need this to access your profile.
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={pin}
-              onChangeText={(text) => {
-                const numericText = text.replace(/[^0-9]/g, '');
-                if (numericText.length <= 4) {
-                  setPin(numericText);
-                }
-              }}
-              placeholder="1234"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-              maxLength={4}
-              secureTextEntry={true}
-            />
-          </View>
+           <View style={styles.inputGroup}>
+             <Text style={styles.label}>4-Digit PIN *</Text>
+             <Text style={styles.pinDescription}>
+               Create a 4-digit PIN to secure your profile. You'll need this to access your profile.
+             </Text>
+             <TextInput
+               style={styles.input}
+               value={createFormData.pin}
+               onChangeText={(text) => {
+                 const numericText = text.replace(/[^0-9]/g, '');
+                 if (numericText.length <= 4) {
+                   setCreateFormData({...createFormData, pin: numericText});
+                 }
+               }}
+               placeholder="1234"
+               placeholderTextColor="#999"
+               keyboardType="numeric"
+               maxLength={4}
+               secureTextEntry={true}
+             />
+           </View>
 
-          {profiles.length > 0 && (
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Role Assignment *</Text>
-              <Text style={styles.roleDescription}>
-                {ROLE_DESCRIPTIONS[selectedRole]}
-              </Text>
-              <View style={styles.roleButtons}>
-                {(['Admin', 'Standard Plus', 'Standard', 'Child', 'Guest'] as const).map((role) => (
-                  <TouchableOpacity
-                    key={role}
-                    style={[
-                      styles.roleButton,
-                      selectedRole === role && styles.roleButtonSelected
-                    ]}
-                    onPress={() => handleRoleChange(role)}
-                  >
-                    <Text style={[
-                      styles.roleButtonText,
-                      selectedRole === role && styles.roleButtonTextSelected
-                    ]}>
-                      {role}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
+                     <View style={styles.inputGroup}>
+             <Text style={styles.label}>User Role</Text>
+             <Text style={styles.helperText}>
+               Choose the role that best fits your needs. First profile on device becomes Admin automatically.
+             </Text>
+             <View style={styles.roleButtons}>
+               {(['Regular', 'Child', 'Guest', 'Admin'] as const).map((role) => (
+                 <TouchableOpacity
+                   key={role}
+                   style={[
+                     styles.roleButton,
+                     createFormData.selectedRole === role && styles.roleButtonSelected
+                   ]}
+                   onPress={() => setCreateFormData({...createFormData, selectedRole: role})}
+                 >
+                   <Text style={[
+                     styles.roleButtonText,
+                     createFormData.selectedRole === role && styles.roleButtonTextSelected
+                   ]}>
+                     {role}
+                   </Text>
+                 </TouchableOpacity>
+               ))}
+             </View>
+           </View>
 
-          <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
-            onPress={handleSubmitProfile}
-          >
-            <Text style={styles.buttonText}>Create Buddy</Text>
-          </TouchableOpacity>
+           <View style={styles.inputGroup}>
+             <Text style={styles.label}>Subscription Plan</Text>
+             <Text style={styles.helperText}>
+               Select a plan that matches your usage requirements.
+             </Text>
+             <View style={styles.roleButtons}>
+               {(['FREE', 'STANDARD', 'STANDARD_PLUS', 'PREMIUM', 'UNLIMITED'] as const).map((plan) => (
+                 <TouchableOpacity
+                   key={plan}
+                   style={[
+                     styles.roleButton,
+                     createFormData.selectedPlan === plan && styles.roleButtonSelected
+                   ]}
+                   onPress={() => setCreateFormData({...createFormData, selectedPlan: plan})}
+                 >
+                   <Text style={[
+                     styles.roleButtonText,
+                     createFormData.selectedPlan === plan && styles.roleButtonTextSelected
+                   ]}>
+                     {plan}
+                   </Text>
+                 </TouchableOpacity>
+               ))}
+             </View>
+           </View>
+
+                     <TouchableOpacity
+             style={[styles.button, styles.primaryButton]}
+             onPress={() => {
+               // Validate form data
+               if (!createFormData.email || !createFormData.buddyName || !createFormData.pin) {
+                 alert('Please fill in all required fields (Email, Buddy Name, and PIN).');
+                 return;
+               }
+               
+               if (createFormData.pin.length !== 4) {
+                 alert('PIN must be exactly 4 digits.');
+                 return;
+               }
+               
+               // Create new profile
+               const newProfile: Profile = {
+                 id: Date.now().toString(),
+                 email: createFormData.email,
+                 name: createFormData.buddyName,
+                 pin: createFormData.pin,
+                 role: createFormData.selectedRole,
+                 subscriptionPlan: createFormData.selectedPlan,
+                 isAdmin: profiles.length === 0, // First profile becomes admin
+                 createdAt: new Date(),
+                 searchHistory: [],
+                 rules: { ...DEFAULT_RULES, ...getRoleSpecificRules(createFormData.selectedRole) },
+                 llmContext: generateInitialLLMContext(createFormData.selectedRole, createFormData.buddyName),
+                 shortTermMemory: [],
+                 longTermMemory: []
+               };
+               
+               // Add to profiles and save to localStorage
+               const updatedProfiles = [...profiles, newProfile];
+               setProfiles(updatedProfiles);
+               localStorage.setItem('mybuddy-profiles', JSON.stringify(updatedProfiles));
+               
+               // Reset form and close
+               setCreateFormData({
+                 email: '',
+                 buddyName: '',
+                 pin: '',
+                 selectedRole: 'Regular',
+                 selectedPlan: 'FREE'
+               });
+               setShowCreateForm(false);
+               
+               alert(`Profile created successfully! ${newProfile.name} is now ready to use.`);
+             }}
+           >
+             <Text style={styles.buttonText}>Create Buddy</Text>
+           </TouchableOpacity>
         </View>
       </ScrollView>
     );
@@ -1474,6 +1591,12 @@ const styles = StyleSheet.create({
   },
   roleButtonTextSelected: {
     color: '#fff',
+  },
+  helperText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 10,
+    lineHeight: 20,
   },
   input: {
     backgroundColor: '#fff',
