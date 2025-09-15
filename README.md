@@ -71,7 +71,21 @@ git clone https://github.com/yourusername/mybuddy.git
 cd mybuddy
 ```
 
-### 2. Backend Setup (Search-focused)
+### 2. Start Both (Windows – recommended)
+```powershell
+# From repo root
+./scripts/all.ps1               # Opens two terminals (backend + frontend)
+# or run in one terminal (backend background, frontend foreground)
+./scripts/run-all.ps1
+```
+
+Notes:
+- Frontend dev server runs at `http://localhost:19006/` (webpack-dev-server).
+- Backend runs at `http://localhost:8080/api/v1`.
+- Health: `http://localhost:8080/api/v1/actuator/health`
+- Swagger UI: `http://localhost:8080/api/v1/swagger-ui.html`
+
+### 3. Backend Setup (manual Search-focused)
 ```bash
 cd backend
 
@@ -88,15 +102,15 @@ java -jar target/mybuddy-backend-0.0.1-SNAPSHOT.jar
 
 📖 **Detailed Backend Setup**: See [backend/README.md](backend/README.md) for comprehensive backend setup instructions.
 
-### 3. Frontend Setup
+### 4. Frontend Setup (manual)
 ```bash
 cd frontend
 
 # Install dependencies
 npm install
 
-# Start webpack development server (recommended for testing)
-npm run webpack
+# Start webpack development server (recommended)
+npm run webpack               # serves on http://localhost:19006/
 
 # Or start Expo development server
 npm start
@@ -109,7 +123,54 @@ npm run web      # Web
 
 📖 **Detailed Frontend Setup**: See [frontend/README.md](frontend/README.md) for comprehensive frontend setup instructions.
 
-### 4. Database Setup
+Dependency notes:
+- If install fails on `csp-html-webpack-plugin`, use a valid version:
+  ```bash
+  npm install csp-html-webpack-plugin@^5.1.0 --save-dev
+  ```
+- If you see "Module not found: react-markdown", install:
+  ```bash
+  npm install react-markdown@^9 remark-gfm@^4 --save
+  ```
+
+### 4.a Frontend with Yarn
+
+You can run the frontend with Yarn in two ways. Do not mix npm and Yarn in the same workspace.
+
+- Option A: Yarn via Corepack (Yarn 4, default when `packageManager` is set)
+  ```bash
+  cd frontend
+  corepack enable
+  corepack prepare yarn@4.9.4 --activate
+  yarn --version
+  yarn install --immutable
+  yarn webpack
+  ```
+
+- Option B: Yarn Classic (Yarn 1.x, matches Cloudflare Pages default)
+  1) Set the project to use Yarn 1 (one-time):
+  ```bash
+  # in frontend/package.json set
+  #   "packageManager": "yarn@1.22.22"
+  ```
+  2) Clean npm artifacts and install with Yarn 1:
+  ```bash
+  cd frontend
+  rm -f package-lock.json && rm -rf node_modules
+  npm i -g yarn@1.22.22
+  yarn --version            # 1.22.22
+  yarn install
+  yarn webpack
+  ```
+
+If you hit network errors with Yarn, try:
+```bash
+yarn config set registry https://registry.npmjs.org
+yarn config set network-timeout 600000
+yarn install
+```
+
+### 5. Database Setup
 The app uses H2 in-memory database by default. For production:
 
 ```bash
@@ -156,7 +217,11 @@ docker-compose logs -f backend
 
 ### Frontend Configuration
 - `frontend/services/api.ts` - API endpoint configuration
-- Environment-based base URLs (dev/prod)
+- Default base URL: `http://localhost:8080/api/v1`
+- Adjust if your backend runs on a different host/port
+
+### Cloudflare Pages Deployment
+- See `CLOUDFLARE_GUIDE.md` for step-by-step instructions to deploy the frontend with Yarn.
 
 ## 📊 API Endpoints (current)
 

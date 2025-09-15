@@ -332,6 +332,22 @@ POST /api/v1/config/openai
 
 ## 🐛 Troubleshooting
 
+### Quick checks
+
+```bash
+# 1) Is the app up?
+curl http://localhost:8080/api/v1/actuator/health
+
+# 2) Swagger UI (open in browser)
+# http://localhost:8080/api/v1/swagger-ui.html
+
+# 3) Is port 8080 already in use?
+# Windows
+netstat -ano | findstr :8080
+# macOS/Linux
+lsof -i :8080
+```
+
 ### Common Issues
 
 #### Port Already in Use
