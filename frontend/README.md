@@ -31,8 +31,8 @@ nvm use 20.19.0
 
 ### Verify Installation
 ```bash
-node --version  # v20.19.0
-npm --version   # 10.x recommended
+node --version  # Should show v20.19.0
+npm --version   # Should show 9.x.x or higher, 10.x recommended
 ```
 
 ## 🛠️ Installation
