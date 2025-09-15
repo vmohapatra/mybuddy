@@ -31,8 +31,8 @@ nvm use 20.19.0
 
 ### Verify Installation
 ```bash
-node --version  # Should show v20.19.0
-npm --version   # Should show 9.x.x or higher
+node --version  # v20.19.0
+npm --version   # 10.x recommended
 ```
 
 ## 🛠️ Installation
@@ -56,11 +56,11 @@ npm --version   # Should show 9.x.x or higher
 
 ### Web Development (Recommended for testing)
 
-1. **Start web (Expo or webpack)**
+1. **Start web (webpack recommended)**
    ```bash
-   npm run web      # Expo web
+   npm run webpack  # webpack dev server on http://localhost:19006/
    # or
-   npm run webpack  # webpack dev server
+   npm run web      # Expo web (alternative)
    ```
 
 2. **Open in browser**
@@ -159,9 +159,20 @@ frontend/
 - **Solution**: Ensure you're in the `frontend` directory
 - **Command**: `cd frontend` then `npm run webpack`
 
-#### "Module not found" errors
-- **Solution**: Reinstall dependencies
-- **Command**: `rm -rf node_modules package-lock.json && npm install`
+#### "Module not found: react-markdown"
+- **Solution**: Install missing packages
+- **Command**:
+  ```bash
+  npm install react-markdown@^9 remark-gfm@^4 --save
+  ```
+
+#### Install error for csp-html-webpack-plugin
+- **Cause**: Invalid version requested
+- **Solution**: Use a valid version
+- **Command**:
+  ```bash
+  npm install csp-html-webpack-plugin@^5.1.0 --save-dev
+  ```
 
 #### Webpack server not starting
 - **Solution**: Check if port 19006 is available

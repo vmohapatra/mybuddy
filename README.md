@@ -58,7 +58,7 @@ mybuddy/
 ## 📋 Prerequisites
 
 - **Java 17+**
-- **Node.js 20.19.0** (required for Expo SDK 49 compatibility)
+- **Node.js 20.19.0** (required)
 - **Expo CLI**
 - **Docker** (optional, for containerized development)
 - **OpenAI API Key**
@@ -71,7 +71,21 @@ git clone https://github.com/yourusername/mybuddy.git
 cd mybuddy
 ```
 
-### 2. Backend Setup (Search-focused)
+### 2. Start Both (Windows – recommended)
+```powershell
+# From repo root
+./scripts/all.ps1               # Opens two terminals (backend + frontend)
+# or run in one terminal (backend background, frontend foreground)
+./scripts/run-all.ps1
+```
+
+Notes:
+- Frontend dev server runs at `http://localhost:19006/` (webpack-dev-server).
+- Backend runs at `http://localhost:8080/api/v1`.
+- Health: `http://localhost:8080/api/v1/actuator/health`
+- Swagger UI: `http://localhost:8080/api/v1/swagger-ui.html`
+
+### 3. Backend Setup (manual)
 ```bash
 cd backend
 
@@ -88,15 +102,15 @@ java -jar target/mybuddy-backend-0.0.1-SNAPSHOT.jar
 
 📖 **Detailed Backend Setup**: See [backend/README.md](backend/README.md) for comprehensive backend setup instructions.
 
-### 3. Frontend Setup
+### 4. Frontend Setup (manual)
 ```bash
 cd frontend
 
 # Install dependencies
 npm install
 
-# Start webpack development server (recommended for testing)
-npm run webpack
+# Start webpack development server (recommended)
+npm run webpack               # serves on http://localhost:19006/
 
 # Or start Expo development server
 npm start
@@ -109,7 +123,17 @@ npm run web      # Web
 
 📖 **Detailed Frontend Setup**: See [frontend/README.md](frontend/README.md) for comprehensive frontend setup instructions.
 
-### 4. Database Setup
+Dependency notes:
+- If install fails on `csp-html-webpack-plugin`, use a valid version:
+  ```bash
+  npm install csp-html-webpack-plugin@^5.1.0 --save-dev
+  ```
+- If you see "Module not found: react-markdown", install:
+  ```bash
+  npm install react-markdown@^9 remark-gfm@^4 --save
+  ```
+
+### 5. Database Setup
 The app uses H2 in-memory database by default. For production:
 
 ```bash
@@ -156,7 +180,8 @@ docker-compose logs -f backend
 
 ### Frontend Configuration
 - `frontend/services/api.ts` - API endpoint configuration
-- Environment-based base URLs (dev/prod)
+- Default base URL: `http://localhost:8080/api/v1`
+- Adjust if your backend runs on a different host/port
 
 ## 📊 API Endpoints (current)
 
