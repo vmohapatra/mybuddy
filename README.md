@@ -58,7 +58,7 @@ mybuddy/
 ## 📋 Prerequisites
 
 - **Java 17+**
-- **Node.js 20.19.0** (required)
+- **Node.js 20.19.0** (required for Expo SDK 49 compatibility)
 - **Expo CLI**
 - **Docker** (optional, for containerized development)
 - **OpenAI API Key**
@@ -85,7 +85,7 @@ Notes:
 - Health: `http://localhost:8080/api/v1/actuator/health`
 - Swagger UI: `http://localhost:8080/api/v1/swagger-ui.html`
 
-### 3. Backend Setup (manual)
+### 3. Backend Setup (manual Search-focused)
 ```bash
 cd backend
 
@@ -219,6 +219,9 @@ docker-compose logs -f backend
 - `frontend/services/api.ts` - API endpoint configuration
 - Default base URL: `http://localhost:8080/api/v1`
 - Adjust if your backend runs on a different host/port
+
+### Cloudflare Pages Deployment
+- See `CLOUDFLARE_GUIDE.md` for step-by-step instructions to deploy the frontend with Yarn.
 
 ## 📊 API Endpoints (current)
 
