@@ -28,11 +28,16 @@ A React Native (Expo + TypeScript) application that provides a cross-platform in
 nvm install 20.19.0
 nvm use 20.19.0
 ```
+### Using yarn
+```bash
+npm install -g yarn
+```
 
 ### Verify Installation
 ```bash
 node --version  # Should show v20.19.0
 npm --version   # Should show 9.x.x or higher
+yarn -version # Should show 1.22.x or higher
 ```
 
 ## 🛠️ Installation
@@ -46,6 +51,16 @@ npm --version   # Should show 9.x.x or higher
    ```bash
    npm install
    ```
+
+   OR
+
+   ```bash
+   cd frontend
+   yarn install
+   yarn build
+   ```
+
+   If this works locally and generates build/ you are ready to run the app
 
 3. **Verify installation**
    ```bash
