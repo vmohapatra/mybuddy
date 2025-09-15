@@ -133,6 +133,43 @@ Dependency notes:
   npm install react-markdown@^9 remark-gfm@^4 --save
   ```
 
+### 4.a Frontend with Yarn
+
+You can run the frontend with Yarn in two ways. Do not mix npm and Yarn in the same workspace.
+
+- Option A: Yarn via Corepack (Yarn 4, default when `packageManager` is set)
+  ```bash
+  cd frontend
+  corepack enable
+  corepack prepare yarn@4.9.4 --activate
+  yarn --version
+  yarn install --immutable
+  yarn webpack
+  ```
+
+- Option B: Yarn Classic (Yarn 1.x, matches Cloudflare Pages default)
+  1) Set the project to use Yarn 1 (one-time):
+  ```bash
+  # in frontend/package.json set
+  #   "packageManager": "yarn@1.22.22"
+  ```
+  2) Clean npm artifacts and install with Yarn 1:
+  ```bash
+  cd frontend
+  rm -f package-lock.json && rm -rf node_modules
+  npm i -g yarn@1.22.22
+  yarn --version            # 1.22.22
+  yarn install
+  yarn webpack
+  ```
+
+If you hit network errors with Yarn, try:
+```bash
+yarn config set registry https://registry.npmjs.org
+yarn config set network-timeout 600000
+yarn install
+```
+
 ### 5. Database Setup
 The app uses H2 in-memory database by default. For production:
 

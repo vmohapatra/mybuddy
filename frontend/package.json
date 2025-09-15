@@ -2,6 +2,7 @@
   "name": "mybuddy-frontend",
   "version": "1.0.0",
   "main": "expo-router/entry",
+  "packageManager": "yarn@1.22.22",
   "engines": {
     "node": "20.19.0"
   },

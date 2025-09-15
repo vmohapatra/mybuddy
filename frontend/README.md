@@ -52,6 +52,28 @@ npm --version   # 10.x recommended
    npm list --depth=0
    ```
 
+### Using Yarn
+
+Run the frontend with Yarn either via Corepack (Yarn 4) or Yarn Classic (1.x). Avoid mixing npm and Yarn.
+
+- Corepack (Yarn 4):
+  ```bash
+  corepack enable
+  corepack prepare yarn@4.9.4 --activate
+  yarn --version
+  yarn install --immutable
+  ```
+
+- Yarn Classic (1.x):
+  ```bash
+  # optional: set in package.json
+  #   "packageManager": "yarn@1.22.22"
+  rm -f package-lock.json && rm -rf node_modules
+  npm i -g yarn@1.22.22
+  yarn --version
+  yarn install
+  ```
+
 ## 🚀 Running the Application
 
 ### Web Development (Recommended for testing)
@@ -93,6 +115,10 @@ npm --version   # 10.x recommended
 # Web development
 npm run webpack          # Start webpack dev server
 npm run build            # Build production bundle (webpack)
+
+# Yarn equivalents
+yarn webpack             # Start webpack dev server
+yarn build               # Build production bundle (webpack)
 
 # Expo development
 npx expo start          # Start Expo development server
@@ -172,6 +198,15 @@ frontend/
 - **Command**:
   ```bash
   npm install csp-html-webpack-plugin@^5.1.0 --save-dev
+  ```
+
+#### Yarn network/registry errors (ECONNABORTED)
+- **Solution**: Set registry and timeout
+- **Command**:
+  ```bash
+  yarn config set registry https://registry.npmjs.org
+  yarn config set network-timeout 600000
+  yarn install
   ```
 
 #### Webpack server not starting
